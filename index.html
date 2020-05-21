@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script src="https://cdn.bootcdn.net/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $("#btnRunStart").on("click", function () {
+                if ($("#inputSecret").val() == "") {
+                    alert("Please input secret");
+                    return;
+                }
+                if ($("#inputPwd").val() == "") {
+                    alert("Please input pwd");
+                    return;
+                }
+                if ($("#inputPort").val() == "") {
+                    alert("Please input port");
+                    return;
+                }
+                var requestBody = buildRunStartRequestBody($("#inputSecret").val(), $("#inputPwd").val(), Number($("#inputPort").val()));
+                $.post("https://1803392225523257.ap-southeast-1.fc.aliyuncs.com/2016-08-15/proxy/auto-create-eci/auto-create-eci/", requestBody,
+                    function (data) {
+                        var message = parseRunStartResponseBody(data);
+                        $('#txtOutput').val(message);
+                    }, "json");
+            });
+            $("#btnRunStop").on("click", function () {
+                if ($("#inputSecret").val() == "") {
+                    alert("Please input secret");
+                    return;
+                }
+                var requestBody = buildRunStopRequestBody($("#inputSecret").val());
+                $.post("https://1803392225523257.ap-southeast-1.fc.aliyuncs.com/2016-08-15/proxy/auto-create-eci/auto-create-eci/", requestBody,
+                    function (data) {
+                        var message = parseRunStopResponseBody(data);
+                        $('#txtOutput').val(message);
+                    }, "json");
+            });
+        });
+        function buildRunStartRequestBody(secret, pwd, port) {
+            var timestamp = Date.parse(new Date()) / 1000;
+            var bodyJson = { "header": { "action": "RunStart", "timestamp": timestamp, "token": getToken(timestamp, secret) }, "payload": { "pwd": pwd, "port": port } };
+            return JSON.stringify(bodyJson);
+        }
+        function parseRunStartResponseBody(body) {
+            if (body.header.error != "") {
+                return body.header.error;
+            } else {
+                return body.payload.ip;
+            }
+        }
+        function buildRunStopRequestBody(secret) {
+            var timestamp = Date.parse(new Date()) / 1000;
+            var bodyJson = { "header": { "action": "RunStop", "timestamp": timestamp, "token": getToken(timestamp, secret) }, "payload": {} };
+            return JSON.stringify(bodyJson);
+        }
+        function parseRunStopResponseBody(body) {
+            if (body.header.error != undefined) {
+                return body.header.error;
+            } else {                
+                return "success";
+            }
+        }
+        function getToken(timestamp, secret) {
+            return arrayBufferToBase64(sha256.digest(secret + "-" + timestamp.toString()));
+        }
+        function arrayBufferToBase64(buffer) {
+            var binary = '';
+            var bytes = new Uint8Array(buffer);
+            var len = bytes.byteLength;
+            for (var i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary);
+        }
+    </script>
+</head>
+
+<body>
+    <div style="display:flex;justify-content:center;">
+        <table>
+            <tr>
+                <td>Secret:</td>
+                <td><input id="inputSecret" type="text" value=""></td>
+            </tr>
+            <tr>
+                <td>Pwd:</td>
+                <td><input id="inputPwd" type="text" value=""></td>
+            </tr>
+            <tr>
+                <td>Port:</td>
+                <td><input id="inputPort" type="text" value=""></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td align="center">
+                    <input id="btnRunStart" type="button" value="RunStart">
+                    <input id="btnRunStop" type="button" value="RunStop">
+                </td>
+            </tr>
+            <tr>
+                <td>Output:</td>
+                <td align="center">
+                    <textarea id="txtOutput" rows="5" style="resize:none;" readonly></textarea>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+
+</html>
