@@ -47,7 +47,7 @@
             return JSON.stringify(bodyJson);
         }
         function parseRunStartResponseBody(body) {
-            if (body.header.error != "") {
+            if (body.header.error != undefined) {
                 return body.header.error;
             } else {
                 return body.payload.ip;
